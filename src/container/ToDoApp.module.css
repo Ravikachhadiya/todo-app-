@@ -1,0 +1,342 @@
+.ToDoAppLayout {
+    display: flex;
+    justify-content: space-between;
+}
+
+.MainLayout{
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    width: 100%;
+    z-index: 400;
+}
+
+.NewTODO{
+    margin-bottom: 20px;
+}
+
+.MoreVertLayout{
+    width: 100%;
+    text-align: right;
+}
+
+.MoreVert{
+    margin: 10px 5px 5px 0;
+    width: fit-content;
+    color: black;
+    cursor: pointer;
+    font-size: large;
+    text-align: center;
+    width: 20%;
+}
+
+.ToDoList{
+    width: 50%;
+}
+
+.emptyListImage{
+    margin-top: 30px;
+    width: 30%;
+    height: auto;
+}
+
+h5{
+    color: rgb(95, 100, 129);
+}
+
+.ToDoApp{
+    width: 50%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    border: 1px solid gainsboro;
+    height: 500px;
+
+}
+
+.FormControl{
+    width: 150px;
+}
+
+.btn{
+     line-height: 18px;
+     border-radius: 2px;
+     margin-left: 10px;
+     margin-right: 10px;
+     font-size: small;
+}
+
+.addInput{
+    outline: none;
+    margin-left: 10px;
+}
+
+.addTaskLayout{
+    margin: 20px;
+}
+
+.data{
+    width: 95%;
+    display: flex;
+    flex-direction: row;
+    justify-content: start;
+    align-items: center;
+    margin-left: 20px;
+    margin-right: 20px;
+}
+
+.add{
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin: 20px;
+}
+
+
+.task{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 60%;
+}
+
+.delete{
+    color: crimson;
+    cursor: pointer;
+    font-size: large;
+    text-align: left;
+    width: 20%;
+    margin-left: 10px;
+
+}
+
+.edit{
+    color: deepskyblue;
+    cursor: pointer;
+    font-size: large;
+    text-align: right;
+    width: 20%;
+    margin-right: 10px;
+}
+
+.cancel{
+    color: red;
+    cursor: pointer;
+    font-size: large;
+    text-align: right;
+    width: 7%;
+    margin-left: 0px;
+}
+
+.save {
+    color: #28a745;
+    cursor: pointer;
+    font-size: large;
+    text-align: left;
+    width: 5%;
+    margin-left: 10px;
+}
+
+.ul{
+    list-style: none;
+    margin-top: 0px;
+    width: 100%;
+    height: 50%;
+    overflow-y: scroll;
+}
+
+li{
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    width: 100%;
+    margin-top: 10px;
+}
+
+.taskValue{
+    width: 60%;
+    text-align: left;
+    background-color: #ebe6db;
+    padding: 3px 10px;
+    border: 1px solid #e9d5a3;
+    outline: none;
+}
+
+.inputFile {
+	width: 0.1px;
+	height: 0.1px;
+	opacity: 0;
+	overflow: hidden;
+	position: absolute;
+	z-index: -1;
+}
+
+.ImageUploader{
+    border-radius: 3px;
+}
+
+.imageUploaderBtn{
+    margin: 8px 10px;
+    background-color: rgb(147, 151, 161);
+    height: 30px;
+    padding: 2px 10px;
+    cursor: pointer;
+    border-radius: 3px;
+}
+
+.imageUploaderBtn:hover{
+    background-color: rgb(92, 88, 88, 0.5);
+}
+
+.imagePreview {
+    width: 60px;
+    height: 60px;
+    margin: 2px 10px;
+    object-fit: cover;
+}
+
+.snackbar{
+    z-index: 500;
+}
+
+@media screen and (max-width: 300px) {
+    .addInput{
+        width: 50%;
+        margin-left: 5px;
+        border: 1px solid gray;
+    }
+
+    .FormControl{
+        width: 20px;
+    }
+
+    .btn{
+        line-height: 12px;
+        border-radius: 2px;
+        margin-left: 0px;
+        font-size: small;
+        padding: 5px 5px;
+    }
+
+    .imageUploaderBtn{
+        margin: 8px 10px;
+        height: 25px;
+        font-size: 1em;
+    }
+
+    .imagePreview {
+        width: 50px;
+        height: 50px;
+        margin: 2px 5px;
+    }
+
+    .emptyListImage{
+        margin-top: 5px;
+        width: 30%;
+    }
+    
+    h5{
+        font-size: 0.8em;
+    }
+
+}
+
+@media screen and (max-width: 540px) {
+    .ToDoAppLayout {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+    }
+
+     .emptyListImage{
+        margin-top: 10px;
+        width: 30%;
+    }
+    
+    h5{
+        font-size: 1em;
+    }
+
+    .ToDoList{
+        width: 100%;
+        background-color: ghostwhite;
+    }
+
+    .ToDoApp {
+        /* background-color: gold; */
+        width: 100%;
+        padding: 10px;
+    }
+
+    .FormControl{
+        width: 100px;
+    }
+
+    .addInput{
+        margin-left: 5px;
+        border: 1px solid gray;
+        width: 50%;
+    }
+
+    .btn{
+        line-height: 12px;
+        border-radius: 2px;
+        margin-left: 0px;
+        font-size: small;
+    }
+
+}
+
+@media screen and (max-width: 740px) {
+    .ToDoList{
+        width: 100%;
+        background-color: ghostwhite;
+    }
+
+    .ToDoApp {
+        /* background-color: gold; */
+        width: 100%;
+        padding: 10px;
+    }
+
+    .FormControl{
+        width: 100px;
+    }
+
+    .addInput{
+        margin-left: 5px;
+        border: 1px solid gray;
+    }
+
+    .btn{
+        line-height: 15px;
+        border-radius: 2px;
+        margin-left: 10px;
+        font-size: small;
+    }
+
+}
+
+::-webkit-scrollbar {
+  width: 5px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: #f1f1f1; 
+}
+ 
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: #888; 
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #555; 
+}

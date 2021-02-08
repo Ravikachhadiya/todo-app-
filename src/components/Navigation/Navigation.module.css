@@ -1,0 +1,66 @@
+.Navigation {
+    height: 48px;
+    background-color: goldenrod;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;;
+}
+
+.Logo{
+    font-weight: bold;
+    color: green;
+    font-size: 28px;
+    text-align: center;
+    align-items: center;
+}
+
+
+p{
+    margin: 0 20px;
+}
+
+.NavigationButton {
+    display: flex;
+    margin: 10px;
+    margin-right: 20px;
+    justify-content: space-between;
+}
+
+.btn{
+    margin: 0 10px;
+}
+
+@media screen and (max-width: 540px) {
+    .Logo{
+        font-size: 22px;
+    }
+
+    .NavigationButton {
+        margin-right: 5px;
+        justify-content: space-between;
+    }
+    
+    .btn{
+        margin: 0 5px;
+        padding: 5px 10px;
+    }
+
+}
+
+@media screen and (max-width: 300px) {
+    .Logo{
+        font-size: 16px;
+    }
+
+    .NavigationButton {
+        margin-right: 2px;
+        justify-content: space-between;
+    }
+    
+    .btn{
+        padding: 5px 10px;
+        margin: 0 5px;
+        font-size: 12px;
+    }
+
+}

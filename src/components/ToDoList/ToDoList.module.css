@@ -1,0 +1,40 @@
+.ToDoList{
+    width: 100%;
+}
+
+.listTitle{
+    margin: 10px 30px 0 0;
+    cursor: pointer;
+    display: flex;
+    padding: 0 5% ;
+    justify-content: space-between;
+}
+
+hr{
+    margin-right: 30px;
+    margin-left: 10px;
+    border-bottom: 1px solid gainsboro;
+}
+
+.delete {
+    color:crimson;
+}
+
+@media screen and (max-width: 540px)  {
+
+    .ToDoList{
+       height: 100px;
+       overflow-y: scroll;
+    }
+
+    hr{
+        margin-right: 20px;
+        margin-left: 20px;
+        border-bottom: 1px solid gainsboro;
+    }
+
+    ul, .listTitle{
+        padding-left: 0px;
+    }
+}
+
