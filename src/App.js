@@ -9,15 +9,8 @@ import Login from './components/Login/Login';
 import Registration from './components/Registration/Registration';
 import ToDoApp from './container/ToDoApp';
 
-// import ToDoApp from './container/ToDoApp';
-
-
 class App extends Component {
   render() {
-    // console.log(this.props.location);
-    // if (!(this.props.location === undefined)) {
-    //   console.log(this.props.location.state.login);
-    // }
 
     let isLogin = JSON.parse(localStorage.getItem('isLogin'));
     return (
@@ -34,5 +27,4 @@ class App extends Component {
   }
 
 }
-
 export default App;

@@ -11,8 +11,8 @@ const toDoList = (props) => {
                 {
                     props.todo.map((todo, index) =>
                         <div key={index} >
-                            <li className={classes.listTitle} onClick={() => props.clicked(todo.id)}>
-                                <p>{todo.title}</p>
+                            <li className={classes.listTitle} >
+                                <p className={classes.title} onClick={() => props.clicked(todo.id)}>{todo.title}</p>
                                 <div
                                     className={classes.delete}
                                     onClick={() => props.deleteTodo(todo.id)}>

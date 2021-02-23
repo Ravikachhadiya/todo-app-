@@ -7,6 +7,7 @@ import { Button, Form } from 'react-bootstrap';
 import { connect } from 'react-redux';
 
 import classes from './Login.module.css';
+import axios from 'axios';
 
 class Login extends Component {
     state = {
@@ -81,54 +82,45 @@ class Login extends Component {
 
     onSubmit = (event) => {
         event.preventDefault();
-        console.log(this.state.userData);
+        //console.log(this.state.userData);
 
         // check data is valid or not
         if (this.formValidationHandler()) {
 
-            // get user data from local storage
-            let userData = JSON.parse(localStorage.getItem('userData'));
-            console.log(userData);
-
-            // get data from state
             let userDataTemp = Object.assign({}, this.state.userData);
 
-            // local storage is empty ?
-            if (userData == null) {
-                this.setState({ openErrorSnackbar: true });
-                return 0;
-            }
-            else {
+            let apiUrl = 'http://192.168.1.139:3000/v1/user/login';
+            axios.post(apiUrl, userDataTemp)
+                .then(res => {
+                    //console.log(res);
+                    //console.log(res.data);
+                    if (res.data.success === true) {
+                        this.setState({ openSuccessSnackbar: true });
+                        this.props.login();
+                        localStorage.setItem("currentUser", res.data.data.id);
 
-                let isUserValid = userData.find((element) => {
-                    if (element.email === userDataTemp.email
-                        && element.password === userDataTemp.password) {
-                        JSON.stringify(localStorage.setItem("currentUser", element.email));
-                        return true;
+                        setTimeout(() =>
+                            this.setState({ redirect: "/" }),
+                            1500
+                        );
+
+                        return 0;
                     }
-                    return false;
+                    else if (res.data.message === "User data not found.") {
+                        this.setState({ openErrorSnackbar: true });
+                        return 0;
+                    }
                 });
-
-                if (isUserValid) {
-                    this.setState({ openSuccessSnackbar: true });
-                    localStorage.setItem('isLogin', JSON.stringify(true));
-                    this.props.login();
-                    this.setState({ redirect: "/" });
-                    return 0;
-                }
-                else {
-                    this.setState({ openErrorSnackbar: true });
-                    return 0;
-                }
-            }
-
         }
     }
 
     render() {
         let isLogin = JSON.parse(localStorage.getItem('isLogin'));
         if (isLogin) {
-            this.setState({ redirect: "/" });
+            setTimeout(() =>
+                this.setState({ redirect: "/" }),
+                100
+            );
         }
 
         if (this.state.redirect) {
@@ -172,14 +164,13 @@ class Login extends Component {
 
 const mapStateToProps = state => {
     return {
-        auth: state.authenticate.isLogin
+        auth: state.auth.isLogin
     }
 }
 
 const mapDispatchToProps = dispatch => {
     return {
         login: () => {
-            console.log("login");
             return dispatch({ type: 'LOGIN' })
         },
     }

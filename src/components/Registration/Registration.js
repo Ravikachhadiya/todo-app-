@@ -4,6 +4,7 @@ import classes from './Registration.module.css';
 import Snackbar from '@material-ui/core/Snackbar';
 import Alert from '@material-ui/lab/Alert';
 import { Redirect } from 'react-router-dom';
+import axios from 'axios';
 
 // import { makeStyles } from '@material-ui/core/styles';
 
@@ -15,8 +16,19 @@ class Registration extends Component {
         openErrorSnackbar: false,
         openSuccessSnackbar: false,
         redirect: null,
+        isLogin: localStorage.getItem('isLogin')
     };
 
+    componentWillUnmount = () => {
+        this.setState = {
+            userData: {},
+            error: {},
+            openErrorSnackbar: false,
+            openSuccessSnackbar: false,
+            redirect: null,
+            isLogin: false
+        };
+    }
     handleChange = (event) => {
         let userDataTemp = this.state.userData;
         userDataTemp[event.target.name] = event.target.value;
@@ -45,44 +57,44 @@ class Registration extends Component {
         this.setState({ error: {} });
 
         // First Name not be empty
-        if (!this.state.userData["firstName"]) {
+        if (!this.state.userData["first_name"]) {
             isFormValid = false;
 
             let errorTemp = this.state.error;
-            errorTemp["firstName"] = "first name can not be empty!";
+            errorTemp["first_name"] = "first name can not be empty!";
 
             this.setState({ error: errorTemp });
         }
 
         // First Name should be in character only
-        if (typeof this.state.userData["firstName"] !== "undefined") {
-            if (!this.state.userData["firstName"].match(/^[a-zA-Z]+$/)) {
+        if (typeof this.state.userData["first_name"] !== "undefined") {
+            if (!this.state.userData["first_name"].match(/^[a-zA-Z]+$/)) {
                 isFormValid = false;
 
                 let errorTemp = this.state.error;
-                errorTemp["firstName"] = "Please use only characters!";
+                errorTemp["first_name"] = "Please use only characters!";
 
                 this.setState({ error: errorTemp });
             }
         }
 
         // Last Name not be empty
-        if (!this.state.userData["lastName"]) {
+        if (!this.state.userData["last_name"]) {
             isFormValid = false;
 
             let errorTemp = this.state.error;
-            errorTemp["lastName"] = "last name can not be empty!";
+            errorTemp["last_name"] = "last name can not be empty!";
 
             this.setState({ error: errorTemp });
         }
 
         // Last Name should be in character only
-        if (typeof this.state.userData["lastName"] !== "undefined") {
-            if (!this.state.userData["lastName"].match(/^[a-zA-Z]+$/)) {
+        if (typeof this.state.userData["last_name"] !== "undefined") {
+            if (!this.state.userData["last_name"].match(/^[a-zA-Z]+$/)) {
                 isFormValid = false;
 
                 let errorTemp = this.state.error;
-                errorTemp["lastName"] = "Please use only characters!";
+                errorTemp["last_name"] = "Please use only characters!";
 
                 this.setState({ error: errorTemp });
             }
@@ -158,9 +170,9 @@ class Registration extends Component {
                 isFormValid = false;
 
                 if ((this.state.userData["password"].length < 6 || this.state.userData["password"].length > 16)) {
-                    console.log("len :" + true);
+                    //console.log("len :" + true);
                 }
-                console.log("password len : " + this.state.userData["password"].length);
+                //console.log("password len : " + this.state.userData["password"].length);
 
                 let errorTemp = this.state.error;
                 errorTemp["password"] = "Password length should be in between 6 to 16!";
@@ -196,39 +208,45 @@ class Registration extends Component {
 
     onSubmit = (event) => {
         event.preventDefault();
-        console.log(this.state.userData);
+        //console.log(this.state.userData);
         if (this.formValidationHandler()) {
-            let userData = JSON.parse(localStorage.getItem('userData'));
-            console.log(userData);
 
             let userDataTemp = Object.assign({}, this.state.userData);
             delete userDataTemp.confirmPassword;
 
-            if (userData == null) {
-                userData = [userDataTemp];
-            }
-            else {
-                let isUserAlreadyInDatabase = userData.find((element) => {
-                    return element.email === userDataTemp.email;
-                });
-                if (isUserAlreadyInDatabase){
+            userDataTemp.profile_photo = "https://image.freepik.com/free-vector/businessman-profile-cartoon_18591-58479.jpg";
+
+            const apiUrl = 'http://192.168.1.139:3000/v1/user/registerUser';
+
+            axios.post(apiUrl, userDataTemp).then(res => {
+                //console.log(res);
+                if (res.data.success === true) {
+                    //console.log("done");
+                    this.setState({ openSuccessSnackbar: true });
+                    this.setState({ redirect: "/login" });
+                    return 0;
+                }
+                else if (res.data.message === "User already register with this email.") {
+                    //console.log("not");
                     this.setState({ openErrorSnackbar: true });
                     return 0;
                 }
-                userData = [...userData, userDataTemp];
-            }
+            })
 
-            localStorage.setItem('userData', JSON.stringify(userData));
-            this.setState({ openSuccessSnackbar: true });
-            this.setState({ redirect: "/login" });
         }
     }
 
 
     render() {
+        let isLogin = JSON.parse(localStorage.getItem('isLogin'));
+        if (isLogin) {
+            this.setState({ redirect: "/" });
+        }
+
         if (this.state.redirect) {
             return <Redirect to={{
                 pathname: this.state.redirect,
+                state: { login: true }
             }} />
         }
         return (
@@ -248,25 +266,25 @@ class Registration extends Component {
 
                     <Form.Group >
                         <Form.Control
-                            name="firstName"
+                            name="first_name"
                             type="text"
                             placeholder="First name"
                             onChange={this.handleChange}
                         />
                         <Form.Text className="text-muted">
-                            {this.state.error["firstName"]}
+                            {this.state.error["first_name"]}
                         </Form.Text>
                     </Form.Group>
 
                     <Form.Group >
                         <Form.Control
-                            name="lastName"
+                            name="last_name"
                             type="text"
                             placeholder="Last name"
                             onChange={this.handleChange}
                         />
                         <Form.Text className="text-muted">
-                            {this.state.error["lastName"]}
+                            {this.state.error["last_name"]}
                         </Form.Text>
                     </Form.Group>
 

@@ -1,19 +1,16 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
+import { bindActionCreators } from "redux";
+import * as crudAction from '../storeUtils/actions/crudActions';
+
 import defaultPhoto from '../assets/images/empty-photo.jpg';
 
 import emptyList from '../assets/images/empty-list.png';
 
 import Snackbar from '@material-ui/core/Snackbar';
 import Alert from '@material-ui/lab/Alert';
-
-
-// import ImageUploader from 'react-images-upload';
-// [{"email":"test@yopmail.com"," todoData":[{"id":'1', "title":'Test',"image":"","todoList":[{"id":'123',"task":'Test Task',"edit":false}]}]}]
-
 import classes from './ToDoApp.module.css';
 import { Button } from 'react-bootstrap';
-import * as actionTypes from '../store/actions';
 import DeleteIcon from '@material-ui/icons/Delete';
 import CancelIcon from '@material-ui/icons/Cancel';
 import EditIcon from '@material-ui/icons/Edit';
@@ -43,10 +40,17 @@ class ToDoApp extends Component {
             inputCategory: false,
             inputImage: false,
             inputTask: false,
-            openErrorSnackbar: false
+            openErrorSnackbar: false,
+            userID: localStorage.getItem('currentUser'),
+            todoListId: null,
+            editedID: null
         };
-
+        this.getTodoList = this.getTodoList.bind(this);
+        this.handleCloseMenu = this.handleCloseMenu.bind(this);
     }
+
+
+    static timer;
 
     errorHandleClose = (event, reason) => {
         if (reason === 'clickaway') {
@@ -63,30 +67,48 @@ class ToDoApp extends Component {
 
     handleCloseMenu = (id) => {
         this.setState({ anchorEl: null });
-        this.props.deleteTodoList(id);
-        this.props.getToDoList();
+        let deleteTodoData = {
+            id: id,
+            user_id: this.state.userID
+        }
+        this.props.actions.postAll('deleteTodo', deleteTodoData, 'deleteTodo');
+        this.props.actions.resetTodo();
+        this.setState({ title: '', category: 0, image: defaultPhoto, inputTitle: false, inputCategory: false, inputImage: false, todoListId: null });
+        // console.log(this.props.toDoDetails);
+        // console.log(this.state.title, this.state.category, this.state.image, this.state.inputTitle, this.state.inputCategory, this.state.inputImage, this.state.todoListId)
     }
 
     titleHandler = (event) => {
         this.setState({ title: event.target.value, inputTitle: true });
     }
 
-    componentDidMount = () => {
+    componentWillUnmount = () => {
+        this.setState({ title: '', category: 0, image: defaultPhoto, inputTitle: false, inputCategory: false, inputImage: false });
+        this.props.actions.resetTodo();
+    }
+
+    componentDidMount() {
         this.setState({ image: defaultPhoto });
-        this.props.getToDoList();
-        console.log(this.props.toDoList);
-        this.setState({ isListEmpty: this.props.toDoList.length === 0 })
+        // console.log("user : " + this.state.userID);
+
+        this.setState({ isListEmpty: this.props.toDoList.data.length === 0, userID: localStorage.getItem('currentUser') })
+        this.getTodoList();
+        // console.log(this.props.toDoList);
     }
 
     onImageChange = event => {
         if (event.target.files && event.target.files[0]) {
+            console.log(event.target.files)
             let img = event.target.files[0];
             this.setState({
                 image: URL.createObjectURL(img),
-                inputImage: true
+                inputImage: true,
+                img: img
             });
+            console.log(img.name);
+            console.log(this.state.image);
         }
-        // console.log(this.state.image);
+        //console.log(this.state.image);
 
     };
 
@@ -100,12 +122,66 @@ class ToDoApp extends Component {
         if (this.state.image !== defaultPhoto) {
             image = this.state.image
         }
-        this.props.editTodoList(title, category, image, id);
 
-        this.props.getToDoList();
-        this.setState({ isListEmpty: this.props.toDoList.length === 0 })
+        let editTodoData = {
+            id: id,
+            user_id: this.state.userID,
+            title: title,
+            category: category,
+            image: image
+        }
 
-        this.setState({ title: '', category: 0, image: defaultPhoto, inputTitle: false, inputCategory: false, inputImage: false });
+        this.props.actions.postAll('updateTodo', editTodoData, 'updateTodo');
+        // this.setState({ isListEmpty: this.props.toDoList.data.length === 0 })
+    }
+
+    componentWillReceiveProps(nextProps) {
+        // //console.log(nextProps.deleteTodo);
+        if (nextProps.updateTodo && nextProps.updateTodo.success && nextProps.updateTodo?.success !== this.props.updateTodo?.success) {
+            this.getTodoList();
+            this.getTODOData(0);
+            this.props.actions.makeReduxNull("updateTodo", false)
+            if (nextProps.toDoDetails && nextProps.toDoDetails.success && nextProps.toDoDetails?.success !== this.props.toDoDetails?.success) {
+                this.setState({
+                    title: '',
+                    category: 0,
+                    image: defaultPhoto,
+                    inputTitle: false,
+                    inputCategory: false,
+                    inputImage: false,
+                });
+            }
+            console.log(this.state.todoListId);
+        }
+        if (nextProps.deleteTodo && nextProps.deleteTodo.success && nextProps.deleteTodo?.success !== this.props.deleteTodo?.success) {
+            this.getTodoList();
+            this.props.actions.makeReduxNull("deleteTodo", false)
+        }
+        if (nextProps.toDoDetails && nextProps.toDoDetails.success && nextProps.toDoDetails?.success !== this.props.toDoDetails?.success) {
+            console.log("2");
+            this.setState({ todoListId: nextProps.toDoDetails.data.id })
+            console.log(nextProps.toDoDetails)
+            this.getTodoList();
+            this.getTodoDetails();
+        }
+        if (nextProps.addTask && nextProps.addTask.success && nextProps.addTask?.success !== this.props.addTask?.success) {
+            this.getTODOData(0);
+            this.props.actions.makeReduxNull("addTask", false)
+        }
+        if (nextProps.deleteTask && nextProps.deleteTask.success && nextProps.deleteTask?.success !== this.props.deleteTask?.success) {
+            this.getTODOData(0);
+            this.props.actions.makeReduxNull("deleteTask", false)
+        }
+        if (nextProps.editTask && nextProps.editTask.success && nextProps.editTask?.success !== this.props.editTask?.success) {
+            this.getTODOData(0);
+            this.props.actions.makeReduxNull("editTask", false)
+        }
+    }
+
+    getTodoList = () => {
+        // setTimeout(() => {
+        this.props.actions.postAll('getTodo', { user_id: localStorage.getItem('currentUser') }, 'toDoList');
+        // }, 1000);
     }
 
     createTodoHandler = (title, category, image) => {
@@ -113,9 +189,20 @@ class ToDoApp extends Component {
             this.setState({ openErrorSnackbar: true });
         }
         else {
-            this.props.createTodoList(title, category, image);
+            //console.log("UserId add : " + this.state.userID);
+            let addTodoData = {
+                user_id: this.state.userID,
+                title: title,
+                category: category,
+                image: image
+            }
+
+            //console.log("Add");
+            this.props.actions.postAll('addTodo', addTodoData, 'toDoDetails');
+            console.log("1");
         }
-        console.log(this.state.openErrorSnackbar);
+
+        //console.log(this.state.openErrorSnackbar);
     }
 
     taskChangeHandler = (event) => {
@@ -132,10 +219,10 @@ class ToDoApp extends Component {
 
     editHandler = (task, id, listId) => {
         this.setState((prevState) => {
-            return { edit: !prevState.edit, editTask: task }
+            return { editedID: null, editTask: task }
         });
-        this.props.editBtnActivate(id, listId);
-        console.log(this.state.edit);
+        // this.props.editBtnActivate(id, listId);
+        //console.log(this.state.edit);
     }
 
     saveTask = (id, listId) => {
@@ -144,70 +231,134 @@ class ToDoApp extends Component {
             this.setState({ openErrorSnackbar: true });
         }
         else {
-            this.props.editTask(id, this.state.editTask, listId);
-            this.setState({ editTask: '' });
+            // this.props.editTask(id, this.state.editTask, listId);
+            let editTaskData = {
+                user_id: this.state.userID,
+                title: this.state.editTask,
+                id: id
+            }
+
+            this.props.actions.postAll('updateNestedTodo', editTaskData, 'editTask');
+            this.setState({ editTask: '', editedID: null });
         }
     }
 
     getTODOData = (id) => {
-        this.props.getToDoDetails(id);
-        this.setState({ task: '' });
+        this.setState({ title: '', category: 0, image: defaultPhoto, inputTitle: false, inputCategory: false, inputImage: false });
+        if (id === 0) {
+            id = this.state.todoListId
+        }
+        else {
+            this.setState({ todoListId: id });
+        }
         console.log(id);
+        // this.props.getToDoDetails(id);
+        let getTodoData = {
+            todo_id: id
+        }
+
+        this.props.actions.postAll('getTodoData', getTodoData, 'toDoDetails');
+        this.setState({ task: '', editedID: null });
     }
 
     emptyListHandler = () => {
         this.setState({ isListEmpty: !this.state.isListEmpty });
     }
 
-    addTaskHandler = () => {
+    addTaskHandler = (task, todoId) => {
         if (this.state.task === '') {
             this.setState({ openErrorSnackbar: true });
         }
         else {
-            this.props.addTask(this.state.task, this.props.toDoDetails.id);
-            console.log("task : " + this.state.task);
-            this.setState({ task: '' });
+            // this.props.addTask(this.state.task, this.props.toDoDetails.id);
+            //console.log("task : " + this.state.task);
+            let addTaskData = {
+                user_id: this.state.userID,
+                title: task,
+                todo_id: todoId
+            }
+
+            this.props.actions.postAll('addNestedTodo', addTaskData, 'addTask');
+
         }
     }
 
     editBtnHandler = (id, listId, taskValue) => {
-        this.props.editBtnActivate(id, listId);
-        this.setState({ editTask: taskValue });
+        // this.props.editBtnActivate(id, listId);
+        this.setState({ editedID: id, editTask: taskValue });
+        //console.log(id, this.state.editedID)
+    }
+
+    deleteTaskHandler = (taskId) => {
+        let deleteTaskData = {
+            user_id: this.state.userID,
+            id: taskId
+        }
+
+        this.props.actions.postAll('deleteNestedTodo', deleteTaskData, 'deleteTask');
+    }
+
+    resetTodo = () => {
+        this.props.actions.resetTodo();
+        this.setState({
+            title: '',
+            category: 0, image:
+                defaultPhoto,
+            inputTitle: false,
+            inputCategory: false,
+            inputImage: false,
+            editedID: null
+        });
+    }
+
+    getTodoDetails = () => {
+        console.log("3");
+        console.log(this.props.toDoDetails);
+        console.log(this.state.todoListId);
+        if (this.state.todoListId === null && this.props.toDoDetails.data.length !== 0) {
+            console.log(this.props.toDoDetails);
+            console.log(this.state.todoListId);
+            this.setState({ todoListId: this.props.toDoDetails.data.id })
+        }
     }
 
     render() {
-        // this.props.getToDoList();
-        // console.log(this.props.toDoDetails);
-        console.log(this.props.toDoList);
-        console.log(this.props.tasks);
+        // console.log(this.props.toDoList.data.length === 0);
+        // console.log(this.props.toDoList.data)
+        console.log(this.props.toDoDetails);
+
+        //console.log(this.props.tasks);
+        //console.log(this.state.title, this.state.image, this.state.category);
+
         return (
             <div className={classes.MainLayout}>
                 <div className={classes.NewTODO}>
                     <Button
                         variant="primary" type="submit"
                         className={classes.btn}
-                        startIcon={<AddIcon />}
-                        onClick={this.props.resetTodo}>
+                        starticon={<AddIcon />}
+                        onClick={this.resetTodo}>
                         + New TO-DO
                     </Button>
                 </div>
-
 
                 <div className={classes.ToDoAppLayout}>
                     <div className={classes.ToDoList}>
 
                         {
-                            this.props.toDoList.length === 0 ?
-                                <>
-                                    <img src={emptyList} className={classes.emptyListImage} alt="Please create list" />
-                                    <h5> Please create list</h5>
-                                </>
-                                :
-                                < ToDoList todo={this.props.toDoList} clicked={this.getTODOData} deleteTodo={this.handleCloseMenu}/>
+                            this.props.toDoList.data === undefined ?
+                                <h5> Please wait a some time</h5>
+                                : this.props.toDoList.data.length === 0 ?
+                                    <>
+                                        <img src={emptyList} className={classes.emptyListImage} alt="Please create list" />
+                                        <h5> Please create list</h5>
+                                    </>
+                                    :
+                                    <ToDoList todo={this.props.toDoList.data} clicked={this.getTODOData} deleteTodo={this.handleCloseMenu} />
                         }
                     </div>
                     <div className={classes.ToDoApp}>
-                        {this.props.toDoDetails.length !== 0 ?
+                        {this.props.toDoDetails.data.length !== 0 ?
                             <div
                                 className={classes.MoreVertLayout}
                             // onClick={(}
@@ -220,7 +371,7 @@ class ToDoApp extends Component {
                                     open={Boolean(this.state.anchorEl)}
                                     onClose={this.handleCloseMenu} >
 
-                                    <MenuItem onClick={() => { this.handleCloseMenu(this.props.toDoDetails.id) }}>
+                                    <MenuItem onClick={() => { this.handleCloseMenu(this.props.toDoDetails.data.id) }}>
                                         Delete
                                     </MenuItem>
                                 </Menu>
@@ -233,8 +384,8 @@ class ToDoApp extends Component {
                                 type="text"
                                 name="title"
                                 placeholder="Title"
-                                value={this.props.toDoDetails.length !== 0 && !this.state.inputTitle
-                                    ? this.props.toDoDetails.title
+                                value={this.props.toDoDetails.data.length !== 0 && !this.state.inputTitle
+                                    ? this.props.toDoDetails.data.title
                                     : this.state.title}
                                 className={classes.addInput}
                                 onChange={this.titleHandler} />
@@ -244,27 +395,32 @@ class ToDoApp extends Component {
                                 variant="primary" type="submit"
                                 className={classes.btn}
                                 onClick={() => {
-                                    console.log(this.state.title, this.state.category, this.state.image);
-                                    return this.props.toDoDetails.length !== 0 ?
-                                        this.editTodoHandler(this.props.toDoDetails.title, this.props.toDoDetails.category, this.props.toDoDetails.image, this.props.toDoDetails.id)
+                                    //console.log(this.state.title, this.state.category, this.state.image);
+                                    return this.props.toDoDetails.data.length !== 0 ?
+                                        this.editTodoHandler(this.props.toDoDetails.data.title,
+                                            this.props.toDoDetails.data.category,
+                                            this.props.toDoDetails.data.image,
+                                            this.props.toDoDetails.data.id)
                                         : this.createTodoHandler(this.state.title, this.state.category, this.state.image)
                                 }}>
-                                {this.props.toDoDetails.length !== 0 ? "Save" : "Create TO DO"}
+                                {
+                                    this.props.toDoDetails.data.length !== 0 ? "Save" : "Create TO DO"}
                             </Button>
                             {/* <input type="file" name="myImage" id="file" className={classes.inputFile} onChange={this.onImageChange}/>
                         <label htmlFor="file">Choose a file</label>  */}
                         </div>
 
                         <div className={classes.data}>
-                            {/* {console.log(this.props.toDoDetails.length === 0 ? true : false)} */}
+                            {/* {console.log(this.props.toDoDetails.data.length === 0 ? true : false)} */}
                             <FormControl variant="filled">
                                 <InputLabel id="demo-simple-select-filled-label">Category</InputLabel>
                                 <Select className={classes.FormControl}
                                     labelId="demo-simple-select-filled-label"
                                     id="demo-simple-select-filled"
-                                    value={this.props.toDoDetails.length !== 0 && !this.state.inputCategory
-                                        ? this.props.toDoDetails.category
-                                        : this.state.category}
+                                    value={
+                                        this.props.toDoDetails.data.length !== 0 && !this.state.inputCategory
+                                            ? this.props.toDoDetails.data.category :
+                                            this.state.category}
                                     onChange={this.categoryHandleChange}
                                 >
                                     <MenuItem value="" >
@@ -277,18 +433,19 @@ class ToDoApp extends Component {
                             </FormControl>
 
                             {/* Image */}
-                            {/* {console.log("image : " + this.props.toDoDetails.image, "\nimage : " + this.state.image)} */}
+                            {/* {console.log("image : " + this.props.toDoDetails.data.image, "\nimage : " + this.state.image)} */}
                             <label htmlFor="file" className={classes.imageUploaderBtn}>upload</label>
                             <img htmlFor="file"
-                                src={this.props.toDoDetails.length !== 0 && !this.state.inputImage
-                                    ? this.props.toDoDetails.image
-                                    : this.state.image}
+                                src={
+                                    this.props.toDoDetails.data.length !== 0 && !this.state.inputImage
+                                        ? this.props.toDoDetails.data.image :
+                                        this.state.image}
                                 className={classes.imagePreview} alt="list" />
                             <input type="file" name="myImage" id="file" className={classes.inputFile} onChange={this.onImageChange} />
 
                         </div>
                         {
-                            this.props.toDoDetails.length !== 0 ?
+                            this.props.toDoDetails.data.length !== 0 ?
                                 <div className={classes.addTaskLayout}>
 
                                     {/* add input */}
@@ -305,7 +462,7 @@ class ToDoApp extends Component {
                                     <Button
                                         variant="primary" type="submit"
                                         className={classes.btn}
-                                        onClick={() => this.addTaskHandler(this.state.task, this.props.toDoDetails.id)}>
+                                        onClick={() => this.addTaskHandler(this.state.task, this.props.toDoDetails.data.id)}>
                                         Add
                                 </Button>
                                 </div>
@@ -313,47 +470,53 @@ class ToDoApp extends Component {
                                 null
                         }
                         <>
-                            <ul className={classes.ul}>
-                                {this.props.tasks.map(task => (
-                                    <li key={task.id}>
-                                        <div className={classes.task}>
-                                            <div
-                                                className={classes.edit}
-                                                onClick={() => this.editBtnHandler(task.id, this.props.toDoDetails.id, task.value)} >
-                                                <EditIcon />
-                                            </div>
+                            {
+                                this.props.toDoDetails.data.length !== 0 ?
+                                    this.props.toDoDetails.data.Nested_todoes.length !== 0 ?
+                                        <ul className={classes.ul}>
+                                            {this.props.toDoDetails.data.Nested_todoes.map(task => (
+                                                <li key={task.id}>
+                                                    <div className={classes.task}>
+                                                        <div
+                                                            className={classes.edit}
+                                                            onClick={() => this.editBtnHandler(task.id, this.props.toDoDetails.data.id, task.title)} >
+                                                            <EditIcon />
+                                                        </div>
 
-                                            <input
-                                                className={[classes.taskValue].join(' ')}
-                                                value={task.edit ? this.state.editTask : task.value}
-                                                disabled={!task.edit}
-                                                onChange={this.editTaskHandler} />
+                                                        <input
+                                                            className={[classes.taskValue].join(' ')}
+                                                            value={this.state.editedID === task.id ? this.state.editTask : task.title}
+                                                            disabled={this.state.editedID !== task.id}
+                                                            onChange={this.editTaskHandler} />
 
-                                            {
-                                                !task.edit ?
-                                                    <div
-                                                        className={classes.delete}
-                                                        onClick={() => this.props.deleteTask(task.id, this.props.toDoDetails.id)}>
-                                                        <DeleteIcon />
+                                                        {
+                                                            this.state.editedID !== task.id ?
+                                                                <div
+                                                                    className={classes.delete}
+                                                                    onClick={() => this.deleteTaskHandler(task.id)}>
+                                                                    <DeleteIcon />
+                                                                </div>
+                                                                :
+                                                                <>
+                                                                    <div
+                                                                        className={classes.cancel}
+                                                                        onClick={() => this.editHandler(task.title, task.id, this.props.toDoDetails.data.id)}>
+                                                                        <CancelIcon />
+                                                                    </div>
+                                                                    <div
+                                                                        className={classes.save}
+                                                                        onClick={() => this.saveTask(task.id, this.props.toDoDetails.data.id)}>
+                                                                        <SaveIcon />
+                                                                    </div>
+                                                                </>
+                                                        }
                                                     </div>
-                                                    :
-                                                    <>
-                                                        <div
-                                                            className={classes.cancel}
-                                                            onClick={() => this.editHandler(task.value, task.id, this.props.toDoDetails.id)}>
-                                                            <CancelIcon />
-                                                        </div>
-                                                        <div
-                                                            className={classes.save}
-                                                            onClick={() => this.saveTask(task.id, this.props.toDoDetails.id)}>
-                                                            <SaveIcon />
-                                                        </div>
-                                                    </>
-                                            }
-                                        </div>
-                                    </li>
-                                ))}
-                            </ul>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                        : null
+                                    : null
+                            }
                         </>
                     </div>
                 </div>
@@ -367,37 +530,23 @@ class ToDoApp extends Component {
 }
 const mapStateToProps = state => {
     return {
-        tasks: state.todoList.tasksList,
-        toDoDetails: state.todoList.toDoDetails,
-        toDoList: state.todoList.todoLists
+        tasks: state.crud.tasks,
+        toDoDetails: state.crud.toDoDetails,
+        toDoList: state.crud.toDoList,
+        deleteTodo: state.crud.deleteTodo,
+        updateTodo: state.crud.updateTodo,
+        // toDoList: state.crud.toDoList,
+        addTask: state.crud.addTask,
+        deleteTask: state.crud.deleteTask,
+        editTask: state.crud.editTask,
     };
 }
 
-const mapDispatchToProps = dispatch => {
-    return {
-        addTask: (task, id) => {
-            // console.log(task);
-            return dispatch({ type: actionTypes.ADD_TASK, task: task, listId: id })
-        },
-        deleteTask: (id, listId) => dispatch({ type: actionTypes.REMOVE_TASK, taskElId: id, listId: listId }),
-        editTask: (id, task, listId) => dispatch({ type: actionTypes.EDIT_TASK, taskElId: id, task: task, listId: listId }),
-        editBtnActivate: (id, listId) => dispatch({ type: actionTypes.EDIT_BTN_ACTIVATE, taskElId: id, listId: listId }),
-        createTodoList: (titlePara, categoryPara, imagePara) => {
-            console.log("title  : " + titlePara, categoryPara, imagePara);
-
-            return dispatch({ type: actionTypes.CREATE_TODO, title: titlePara, category: categoryPara, image: imagePara })
-        },
-        editTodoList: (titlePara, categoryPara, imagePara, id) => {
-            // console.log("title  : " + titlePara, categoryPara, imagePara)
-            return dispatch({ type: actionTypes.EDIT_TODO, title: titlePara, category: categoryPara, image: imagePara, listId: id })
-        },
-        deleteTodoList: (id) => {
-            return dispatch({ type: actionTypes.DELETE_TODO, listId: id })
-        },
-        getToDoList: () => dispatch({ type: actionTypes.GET_TODO_LIST }),
-        getToDoDetails: (id) => dispatch({ type: actionTypes.GET_TODO_DETAILS, id: id }),
-        resetTodo: () => dispatch({ type: actionTypes.RESET_TODO }),
-    };
-};
+const mapDispatchToProps = (dispatch) => ({
+    actions: bindActionCreators(
+        Object.assign({}, crudAction),
+        dispatch
+    ),
+});
 
 export default connect(mapStateToProps, mapDispatchToProps)(ToDoApp);
